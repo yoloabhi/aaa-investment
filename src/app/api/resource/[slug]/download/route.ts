@@ -40,26 +40,28 @@ export async function GET(
     }
   });
 
-  // Generate a signed URL that bypasses the 401 restriction
+  // Generate a signed URL that bypasses restrictions
   try {
-    // For 'raw' resources, the extension is already in the public ID, 
-    // so we pass an empty string for the format to avoid .pdf.pdf
-    const signedUrl = cloudinary.utils.private_download_url(
-      downloadToken.resource.pdfCloudinaryPublicId,
-      '', 
-      {
-        resource_type: 'raw',
-        attachment: true,
-        expires_at: Math.floor(Date.now() / 1000) + 600
-      }
-    );
+    // For 'raw' resources, we use the general url() generator with sign_url: true
+    // this is more reliable for PDFs than private_download_url
+    const signedUrl = cloudinary.url(downloadToken.resource.pdfCloudinaryPublicId, {
+      resource_type: 'raw',
+      sign_url: true,
+      secure: true,
+      flags: 'attachment',
+      // Ensure we try both 'upload' and 'authenticated' if needed, 
+      // but 'upload' is the default for signed uploads
+      type: 'upload' 
+    });
 
+    console.log("Generated Signed URL:", signedUrl);
     return NextResponse.redirect(signedUrl);
   } catch (err: any) {
     console.error("Cloudinary signing error:", err);
     return NextResponse.json({ 
       error: "Failed to generate download link", 
-      details: err.message 
+      details: err.message,
+      id: downloadToken.resource.pdfCloudinaryPublicId
     }, { status: 500 });
   }
 }
