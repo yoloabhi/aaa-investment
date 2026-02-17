@@ -42,11 +42,20 @@ export async function GET(
   // Fetch PDF from Cloudinary and stream it
   try {
     console.log("Proxying PDF from:", downloadToken.resource.pdfUrl);
-    const pdfResponse = await fetch(downloadToken.resource.pdfUrl);
+    
+    // Set a timeout for the fetch
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds
+
+    const pdfResponse = await fetch(downloadToken.resource.pdfUrl, {
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
     
     if (!pdfResponse.ok) {
       console.error(`Cloudinary fetch failed: ${pdfResponse.status} ${pdfResponse.statusText}`);
-      throw new Error("Cloudinary file not found");
+      throw new Error(`Cloudinary file not found: ${pdfResponse.status}`);
     }
 
     const pdfBuffer = await pdfResponse.arrayBuffer();
@@ -55,13 +64,14 @@ export async function GET(
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `inline; filename="${downloadToken.resource.slug}.pdf"`,
+        'Cache-Control': 'no-store, max-age=0',
       },
     });
   } catch (err: any) {
     console.error("PDF proxy error:", err);
     return NextResponse.json({ 
       error: "Failed to fetch document", 
-      details: err.message,
+      details: err.name === 'AbortError' ? "Request timed out" : err.message,
       url: downloadToken.resource.pdfUrl 
     }, { status: 500 });
   }
