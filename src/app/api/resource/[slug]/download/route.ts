@@ -39,6 +39,22 @@ export async function GET(
     }
   });
 
-  // Redirect to Cloudinary URL
-  return NextResponse.redirect(downloadToken.resource.pdfUrl);
+  // Fetch PDF from Cloudinary and stream it
+  try {
+    const pdfResponse = await fetch(downloadToken.resource.pdfUrl);
+    
+    if (!pdfResponse.ok) throw new Error("Cloudinary file not found");
+
+    const pdfBuffer = await pdfResponse.arrayBuffer();
+
+    return new Response(pdfBuffer, {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `inline; filename="${downloadToken.resource.slug}.pdf"`,
+      },
+    });
+  } catch (err) {
+    console.error("PDF proxy error:", err);
+    return NextResponse.json({ error: "Failed to fetch document" }, { status: 500 });
+  }
 }
