@@ -1,0 +1,179 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum LeadSource {
+  contact_form
+  resource_download
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role      @default(USER)
+  accounts      Account[]
+  sessions      Session[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Lead {
+  id             String     @id @default(cuid())
+  name           String
+  email          String
+  phone          String?
+  city           String?
+  source         LeadSource
+  interestedIn   String?    // Investment, Insurance, Both
+  message        String?
+  resourceId     String?
+  resource       Resource?  @relation(fields: [resourceId], references: [id])
+  downloadTokens DownloadToken[]
+  downloads      ResourceDownload[]
+  createdAt      DateTime   @default(now())
+
+  @@index([createdAt])
+  @@index([source])
+}
+
+model GalleryItem {
+  id                 String   @id @default(cuid())
+  title              String
+  alt                String?
+  category           String   // Event, Award, Office, etc.
+  eventMonth         String?  // New field
+  eventYear          String?  // New field
+  featured           Boolean  @default(false)
+  order              Int      @default(0)
+  published          Boolean  @default(true)
+  cloudinaryPublicId String
+  url                String
+  createdAt          DateTime @default(now())
+
+  @@index([category])
+  @@index([published])
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  name      String
+  roleTitle String
+  bio       String?
+  photoUrl  String
+  order     Int      @default(0)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model Post {
+  id              String   @id @default(cuid())
+  title           String
+  slug            String   @unique
+  excerpt         String?
+  coverUrl        String?
+  markdownContent String
+  published       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Resource {
+  id                    String   @id @default(cuid())
+  title                 String
+  slug                  String   @unique
+  description           String?
+  coverUrl              String?
+  pdfUrl                String
+  pdfCloudinaryPublicId String
+  published             Boolean  @default(false)
+  campaignTag           String?
+  leads                 Lead[]
+  downloads             ResourceDownload[]
+  downloadTokens        DownloadToken[]
+  createdAt             DateTime @default(now())
+}
+
+model DownloadToken {
+  id         String    @id @default(cuid())
+  resourceId String
+  resource   Resource  @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  leadId     String
+  lead       Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([expiresAt])
+  @@index([tokenHash])
+}
+
+model ResourceDownload {
+  id         String   @id @default(cuid())
+  resourceId String
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  leadId     String
+  lead       Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+}
+
+model SiteSettings {
+  id             String  @id @default(cuid())
+  yearsExperience String  @default("30+")
+  clientsCount    String  @default("5000+")
+  aum             String  @default("600+")
+  claimSettlement String  @default("99.1%")
+  awardsCount     String  @default("200+")
+  
+  showStats       Boolean @default(true) // Master toggle
+}
