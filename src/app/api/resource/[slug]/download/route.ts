@@ -40,39 +40,68 @@ export async function GET(
     }
   });
 
-  // Secure Server-Side Proxy using Admin API
+  // Secure Server-Side Proxy with Diagnostics
   try {
     const publicId = downloadToken.resource.pdfCloudinaryPublicId;
-    console.log("Attempting Admin API fetch for:", publicId);
+    
+    // 1. Diagnostic: Check environment variables
+    const config = {
+      cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
+      has_secret: !!process.env.CLOUDINARY_API_SECRET,
+    };
 
-    // Verify config is loaded
-    if (!process.env.CLOUDINARY_API_SECRET) {
-      throw new Error("CLOUDINARY_API_SECRET is not defined in environment");
+    if (!config.has_secret) {
+      throw new Error("Missing CLOUDINARY_API_SECRET in environment");
     }
 
-    // Use the Admin API to get the resource details
-    // This verifies our credentials are working
-    const resource = await cloudinary.api.resource(publicId, { 
-      resource_type: 'raw' 
+    // 2. Diagnostic: Get resource metadata to verify credentials
+    let resource;
+    try {
+      resource = await cloudinary.api.resource(publicId, { 
+        resource_type: 'raw' 
+      });
+    } catch (apiErr: any) {
+      console.error("Cloudinary API Metadata Error:", apiErr);
+      return NextResponse.json({
+        error: "Cloudinary API Authorization Failed",
+        message: apiErr.message,
+        http_code: apiErr.http_code,
+        config_check: {
+          cloud_name: config.cloud_name,
+          api_key: config.api_key,
+          secret_present: config.has_secret
+        }
+      }, { status: 401 });
+    }
+
+    // 3. Generate a signed URL for the fetch
+    // We use the SDK to ensure the signature is 100% correct
+    const signedUrl = cloudinary.url(publicId, {
+      resource_type: 'raw',
+      sign_url: true,
+      secure: true,
+      type: resource.type || 'upload'
     });
 
-    if (!resource || !resource.secure_url) {
-      throw new Error("Resource metadata found but URL is missing");
-    }
-
-    console.log("Resource found, proxying content from secure URL...");
-    
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 20000);
 
-    const pdfResponse = await fetch(resource.secure_url, {
+    const pdfResponse = await fetch(signedUrl, {
       signal: controller.signal
     });
     
     clearTimeout(timeoutId);
     
     if (!pdfResponse.ok) {
-      throw new Error(`Proxy fetch failed: ${pdfResponse.status} ${pdfResponse.statusText}`);
+      const errorText = await pdfResponse.text();
+      return NextResponse.json({
+        error: "Cloudinary Content Fetch Failed",
+        status: pdfResponse.status,
+        statusText: pdfResponse.statusText,
+        attempted_url: signedUrl,
+        response_snippet: errorText.substring(0, 200)
+      }, { status: pdfResponse.status });
     }
 
     const pdfBuffer = await pdfResponse.arrayBuffer();
@@ -85,15 +114,11 @@ export async function GET(
       },
     });
   } catch (err: any) {
-    console.error("PDF proxy error:", err);
-    
-    // Fallback: If it's a 401, it's definitely credentials. 
-    // If it's a 404, the ID in the database is wrong.
+    console.error("General Download Error:", err);
     return NextResponse.json({ 
-      error: "Download failed", 
+      error: "Unexpected Download Failure", 
       details: err.message,
-      status: err.http_code || 500,
       id: downloadToken.resource.pdfCloudinaryPublicId
-    }, { status: err.http_code || 500 });
+    }, { status: 500 });
   }
 }
