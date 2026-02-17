@@ -10,7 +10,6 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Loader2, Eye, PenBox } from 'lucide-react'
 import { marked } from 'marked'
-import DOMPurify from 'isomorphic-dompurify'
 import { CloudinaryUpload } from "./CloudinaryUpload"
 import Image from "next/image"
 
@@ -106,7 +105,7 @@ export function NewsForm({ initialData }: NewsFormProps) {
             {isPreview ? (
               <div 
                 className="prose max-w-none p-6 bg-white border rounded-md min-h-[400px]"
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked.parse(markdown) as string) }}
+                dangerouslySetInnerHTML={{ __html: marked.parse(markdown) as string }}
               />
             ) : (
               <Textarea 

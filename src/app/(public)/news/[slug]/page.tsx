@@ -3,7 +3,6 @@ import { notFound } from "next/navigation"
 import { formatDate } from "@/lib/utils"
 import Image from "next/image"
 import { marked } from "marked"
-import DOMPurify from "isomorphic-dompurify"
 import { Metadata } from "next"
 import { ReadingProgress } from "@/components/animations/ReadingProgress"
 import { BlurFade } from "@/components/animations/BlurFade"
@@ -50,7 +49,6 @@ export default async function PostPage({ params }: Props) {
   })
 
   const htmlContent = await marked.parse(post.markdownContent)
-  const cleanHtml = DOMPurify.sanitize(htmlContent)
 
   return (
     <div className="bg-background min-h-screen">
@@ -127,7 +125,7 @@ export default async function PostPage({ params }: Props) {
                 prose-a:text-blue-500 prose-a:no-underline hover:prose-a:underline
                 prose-img:rounded-[2rem] prose-img:border prose-img:border-border
                 prose-strong:text-foreground"
-              dangerouslySetInnerHTML={{ __html: cleanHtml }}
+              dangerouslySetInnerHTML={{ __html: htmlContent }}
             />
           </article>
 
