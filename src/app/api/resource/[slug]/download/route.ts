@@ -47,7 +47,7 @@ export async function GET(
       'pdf',
       {
         resource_type: 'raw',
-        flags: 'attachment', // Forces download
+        attachment: true, // Correct property name
         expires_at: Math.floor(Date.now() / 1000) + 600 // 10 minutes from now
       }
     );
