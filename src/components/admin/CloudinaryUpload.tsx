@@ -17,7 +17,6 @@ export function CloudinaryUpload({ onUpload, folder = 'aaa-insurance', resourceT
   return (
     <CldUploadWidget 
       signatureEndpoint="/api/admin/cloudinary/signature"
-      uploadPreset="unsigned_preset" // You must create this in Cloudinary
       options={{
         folder,
         resourceType,
