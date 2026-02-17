@@ -11,6 +11,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Loader2, Eye, PenBox } from 'lucide-react'
 import { marked } from 'marked'
 import DOMPurify from 'isomorphic-dompurify'
+import { CloudinaryUpload } from "./CloudinaryUpload"
+import Image from "next/image"
 
 const formSchema = z.object({
   title: z.string().min(2),
@@ -40,7 +42,7 @@ export function NewsForm({ initialData }: NewsFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isPreview, setIsPreview] = useState(false)
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<any>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData ? {
       ...initialData,
@@ -57,6 +59,7 @@ export function NewsForm({ initialData }: NewsFormProps) {
   })
 
   const markdown = watch('markdownContent') || ''
+  const coverUrl = watch('coverUrl')
 
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true)
@@ -117,27 +120,37 @@ export function NewsForm({ initialData }: NewsFormProps) {
         </div>
 
         <div className="space-y-6 bg-white p-6 rounded-xl border h-fit">
-          <h3 className="font-bold border-b pb-4 mb-4">Settings</h3>
+          <h3 className="font-bold border-b pb-4 mb-4 text-black">Settings</h3>
           
           <div className="space-y-2">
-            <label className="text-sm font-semibold">Slug</label>
-            <Input {...register('slug')} placeholder="post-url-slug" />
+            <label className="text-sm font-semibold text-black">Slug</label>
+            <Input {...register('slug')} placeholder="post-url-slug" className="text-black" />
             {errors.slug && <p className="text-red-500 text-xs">{errors.slug.message as string}</p>}
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold">Excerpt</label>
-            <Textarea {...register('excerpt')} placeholder="Short summary..." />
+            <label className="text-sm font-semibold text-black">Excerpt</label>
+            <Textarea {...register('excerpt')} placeholder="Short summary..." className="text-black" />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold">Cover Image URL</label>
-            <Input {...register('coverUrl')} placeholder="Cloudinary URL" />
+            <label className="text-sm font-semibold text-black">Cover Image</label>
+            <div className="relative aspect-video rounded-lg overflow-hidden bg-slate-100 border mb-2">
+              {coverUrl ? (
+                <Image src={coverUrl} alt="Cover" fill className="object-cover" />
+              ) : (
+                <div className="flex items-center justify-center h-full text-slate-400 text-xs italic">No image</div>
+              )}
+            </div>
+            <CloudinaryUpload 
+              onUpload={(url) => setValue("coverUrl", url)} 
+              folder="aaa-news"
+            />
           </div>
 
           <div className="flex items-center space-x-2 pt-4">
             <input type="checkbox" id="published" {...register('published')} />
-            <label htmlFor="published" className="text-sm font-semibold">Publish immediately</label>
+            <label htmlFor="published" className="text-sm font-semibold text-black">Publish immediately</label>
           </div>
 
           <hr />
@@ -146,7 +159,7 @@ export function NewsForm({ initialData }: NewsFormProps) {
             {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : 'Save Post'}
           </Button>
           
-          <Button type="button" variant="ghost" className="w-full" onClick={() => router.back()}>
+          <Button type="button" variant="ghost" className="w-full text-black" onClick={() => router.back()}>
             Cancel
           </Button>
         </div>
