@@ -40,29 +40,39 @@ export async function GET(
     }
   });
 
-  // Secure Server-Side Proxy
+  // Secure Server-Side Proxy using Admin API
   try {
-    // Generate a signed URL (private)
-    const signedUrl = cloudinary.url(downloadToken.resource.pdfCloudinaryPublicId, {
-      resource_type: 'raw',
-      sign_url: true,
-      secure: true,
-      type: 'upload' 
+    const publicId = downloadToken.resource.pdfCloudinaryPublicId;
+    console.log("Attempting Admin API fetch for:", publicId);
+
+    // Verify config is loaded
+    if (!process.env.CLOUDINARY_API_SECRET) {
+      throw new Error("CLOUDINARY_API_SECRET is not defined in environment");
+    }
+
+    // Use the Admin API to get the resource details
+    // This verifies our credentials are working
+    const resource = await cloudinary.api.resource(publicId, { 
+      resource_type: 'raw' 
     });
 
-    console.log("Proxying fetch from Cloudinary...");
+    if (!resource || !resource.secure_url) {
+      throw new Error("Resource metadata found but URL is missing");
+    }
+
+    console.log("Resource found, proxying content from secure URL...");
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s for larger PDFs
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
 
-    const pdfResponse = await fetch(signedUrl, {
+    const pdfResponse = await fetch(resource.secure_url, {
       signal: controller.signal
     });
     
     clearTimeout(timeoutId);
     
     if (!pdfResponse.ok) {
-      throw new Error(`Cloudinary responded with ${pdfResponse.status}`);
+      throw new Error(`Proxy fetch failed: ${pdfResponse.status} ${pdfResponse.statusText}`);
     }
 
     const pdfBuffer = await pdfResponse.arrayBuffer();
@@ -76,10 +86,14 @@ export async function GET(
     });
   } catch (err: any) {
     console.error("PDF proxy error:", err);
+    
+    // Fallback: If it's a 401, it's definitely credentials. 
+    // If it's a 404, the ID in the database is wrong.
     return NextResponse.json({ 
       error: "Download failed", 
       details: err.message,
-      hint: "Try re-uploading the resource if this persists"
-    }, { status: 500 });
+      status: err.http_code || 500,
+      id: downloadToken.resource.pdfCloudinaryPublicId
+    }, { status: err.http_code || 500 });
   }
 }
