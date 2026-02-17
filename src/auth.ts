@@ -13,10 +13,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async signIn({ user }) {
-      if (!user.email) return false
+      if (!user?.email) {
+        console.error("SignIn attempt without email")
+        return false
+      }
       
-      const allowedEmails = process.env.ADMIN_EMAIL_ALLOWLIST?.split(',') || []
-      const isAllowed = allowedEmails.includes(user.email)
+      const allowlistString = process.env.ADMIN_EMAIL_ALLOWLIST || ""
+      const allowedEmails = allowlistString.split(',').map(e => e.trim().toLowerCase())
+      const userEmail = user.email.toLowerCase()
+      
+      const isAllowed = allowedEmails.includes(userEmail)
+      
+      if (!isAllowed) {
+        console.warn(`Denied access to: ${userEmail}. Allowed: ${allowlistString}`)
+      }
       
       return isAllowed
     },
