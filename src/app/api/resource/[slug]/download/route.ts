@@ -40,28 +40,46 @@ export async function GET(
     }
   });
 
-  // Generate a signed URL that bypasses restrictions
+  // Secure Server-Side Proxy
   try {
-    // For 'raw' resources, we use the general url() generator with sign_url: true
-    // this is more reliable for PDFs than private_download_url
+    // Generate a signed URL (private)
     const signedUrl = cloudinary.url(downloadToken.resource.pdfCloudinaryPublicId, {
       resource_type: 'raw',
       sign_url: true,
       secure: true,
-      flags: 'attachment',
-      // Ensure we try both 'upload' and 'authenticated' if needed, 
-      // but 'upload' is the default for signed uploads
       type: 'upload' 
     });
 
-    console.log("Generated Signed URL:", signedUrl);
-    return NextResponse.redirect(signedUrl);
+    console.log("Proxying fetch from Cloudinary...");
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s for larger PDFs
+
+    const pdfResponse = await fetch(signedUrl, {
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!pdfResponse.ok) {
+      throw new Error(`Cloudinary responded with ${pdfResponse.status}`);
+    }
+
+    const pdfBuffer = await pdfResponse.arrayBuffer();
+
+    return new Response(pdfBuffer, {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${downloadToken.resource.slug}.pdf"`,
+        'Cache-Control': 'no-store',
+      },
+    });
   } catch (err: any) {
-    console.error("Cloudinary signing error:", err);
+    console.error("PDF proxy error:", err);
     return NextResponse.json({ 
-      error: "Failed to generate download link", 
+      error: "Download failed", 
       details: err.message,
-      id: downloadToken.resource.pdfCloudinaryPublicId
+      hint: "Try re-uploading the resource if this persists"
     }, { status: 500 });
   }
 }
