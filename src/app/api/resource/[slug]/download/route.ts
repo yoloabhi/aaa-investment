@@ -25,15 +25,11 @@ export async function GET(
     return NextResponse.json({ error: "Invalid token" }, { status: 404 });
   }
 
-  if (downloadToken.usedAt) {
-    return NextResponse.json({ error: "Token already used" }, { status: 410 });
-  }
-
   if (downloadToken.expiresAt < new Date()) {
     return NextResponse.json({ error: "Token expired" }, { status: 410 });
   }
 
-  // Log the download
+  // Log the download (multiple downloads in 10 mins allowed)
   await db.resourceDownload.create({
     data: {
       resourceId: downloadToken.resourceId,
@@ -43,14 +39,6 @@ export async function GET(
     }
   });
 
-  // Mark token as used
-  await db.downloadToken.update({
-    where: { id: downloadToken.id },
-    data: { usedAt: new Date() }
-  });
-
   // Redirect to Cloudinary URL
-  // We can also use NextResponse.redirect(downloadToken.resource.pdfUrl)
-  // But if we want to enforce attachment behavior, we can try to stream or just redirect.
   return NextResponse.redirect(downloadToken.resource.pdfUrl);
 }

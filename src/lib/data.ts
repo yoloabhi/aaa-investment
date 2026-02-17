@@ -36,6 +36,7 @@ export const getPosts = cache(async () => {
       orderBy: { createdAt: 'desc' }
     })
   } catch (e) {
+    console.error("Database error in getPosts:", e)
     return [
       { id: '1', title: 'The Future of Mutual Funds in 2026', slug: 'future-mutual-funds', excerpt: 'Deep dive into market trends...', createdAt: new Date(), coverUrl: 'https://images.unsplash.com/photo-1611974717537-48358a60d374?auto=format&fit=crop&q=80&w=800' },
     ]
