@@ -18,6 +18,7 @@ export function CloudinaryUpload({ onUpload, folder = 'aaa-insurance', resourceT
     <CldUploadWidget 
       signatureEndpoint="/api/admin/cloudinary/signature"
       options={{
+        apiKey: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
         folder,
         resourceType,
         clientAllowedFormats: resourceType === 'image' ? ['png', 'jpg', 'jpeg', 'webp'] : ['pdf'],
