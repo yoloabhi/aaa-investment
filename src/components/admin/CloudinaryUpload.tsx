@@ -16,9 +16,8 @@ export function CloudinaryUpload({ onUpload, folder = 'aaa-insurance', resourceT
 
   return (
     <CldUploadWidget 
-      signatureEndpoint="/api/admin/cloudinary/signature"
+      uploadPreset="aaa_unsigned" // CREATE THIS IN CLOUDINARY DASHBOARD (Unsigned mode)
       options={{
-        apiKey: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
         folder,
         resourceType,
         clientAllowedFormats: resourceType === 'image' ? ['png', 'jpg', 'jpeg', 'webp'] : ['pdf'],
@@ -29,6 +28,10 @@ export function CloudinaryUpload({ onUpload, folder = 'aaa-insurance', resourceT
           onUpload(result.info.secure_url, result.info.public_id);
           setIsUploaded(true);
         }
+      }}
+      onError={(error: any) => {
+        console.error("Cloudinary Upload Error:", error);
+        alert("Upload failed. Check console for details.");
       }}
     >
       {({ open }) => (
