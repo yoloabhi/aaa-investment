@@ -52,12 +52,12 @@ export function ResourceLeadForm({ resourceSlug }: { resourceSlug: string }) {
 
   if (downloadToken) {
     return (
-      <div className="bg-blue-50 p-8 rounded-2xl text-center border border-blue-100 animate-in fade-in zoom-in duration-300">
-        <h3 className="text-2xl font-bold text-blue-900 mb-4">Ready to Download!</h3>
-        <p className="text-blue-700 mb-8">Click the button below to get your free guide. The link will expire in 10 minutes.</p>
-        <Button size="lg" className="w-full" asChild>
+      <div className="bg-primary/10 p-8 rounded-3xl text-center border border-primary/20 animate-in fade-in zoom-in duration-500 backdrop-blur-sm">
+        <h3 className="text-2xl font-black uppercase tracking-tighter text-foreground mb-4">Ready to Download!</h3>
+        <p className="text-muted-foreground mb-8 text-sm font-medium">Click the button below to get your strategic guide. The link will expire in 10 minutes.</p>
+        <Button size="lg" className="w-full h-14 rounded-2xl bg-primary text-primary-foreground font-black text-lg group" asChild>
           <a href={`/api/resource/${resourceSlug}/download?token=${downloadToken}`} target="_blank" rel="noopener noreferrer">
-            <Download className="mr-2 h-5 w-5" /> Download PDF Now
+            <Download className="mr-2 h-5 w-5 transition-transform group-hover:translate-y-1" /> Download Now
           </a>
         </Button>
       </div>
