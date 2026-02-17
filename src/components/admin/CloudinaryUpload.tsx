@@ -21,6 +21,7 @@ export function CloudinaryUpload({ onUpload, folder = 'aaa-insurance', resourceT
         apiKey: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
         folder,
         resourceType,
+        accessType: 'upload', // Explicitly make public
         clientAllowedFormats: resourceType === 'image' ? ['png', 'jpg', 'jpeg', 'webp'] : ['pdf'],
         maxFileSize: 10000000, // 10MB
       }}
