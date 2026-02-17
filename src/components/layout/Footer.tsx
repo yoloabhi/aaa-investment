@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { Instagram, Mail, ArrowUpRight } from "lucide-react"
 
 export function Footer() {
   return (
@@ -6,15 +7,29 @@ export function Footer() {
       <div className="container">
         <div className="grid grid-cols-1 gap-16 md:grid-cols-4 lg:grid-cols-5">
           <div className="md:col-span-2">
-            <Link href="/" className="flex items-center space-x-2 mb-8">
-              <div className="h-6 w-6 bg-primary rounded flex items-center justify-center font-bold text-primary-foreground text-xs">A</div>
+            <Link href="/" className="flex items-center space-x-2 mb-8 group">
+              <div className="aaa-logo-shield transition-transform group-hover:scale-110">A</div>
               <span className="text-lg font-bold tracking-tighter uppercase italic text-foreground">AAA Investment</span>
             </Link>
-            <p className="text-muted-foreground max-w-sm leading-relaxed mb-8">
+            <p className="text-muted-foreground max-w-sm leading-relaxed mb-10">
               Engineering financial security since 1993. A premier consulting firm dedicated to wealth management and comprehensive risk protection.
             </p>
-            <div className="text-muted-foreground/40 text-xs font-bold uppercase tracking-widest">
-              FARIDABAD • HARYANA • INDIA
+            
+            <div className="flex items-center space-x-4">
+              <a 
+                href="https://instagram.com/aaainvestmentandinsurance" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="h-12 w-12 rounded-2xl bg-secondary border border-border flex items-center justify-center hover:bg-primary hover:text-white transition-all duration-500 group"
+              >
+                <Instagram className="h-5 w-5 transition-transform group-hover:scale-110" />
+              </a>
+              <a 
+                href="mailto:acaaainvestment@gmail.com" 
+                className="h-12 w-12 rounded-2xl bg-secondary border border-border flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all duration-500 group"
+              >
+                <Mail className="h-5 w-5 transition-transform group-hover:scale-110" />
+              </a>
             </div>
           </div>
           
