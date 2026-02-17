@@ -42,13 +42,15 @@ export async function GET(
 
   // Generate a signed URL that bypasses the 401 restriction
   try {
+    // For 'raw' resources, the extension is already in the public ID, 
+    // so we pass an empty string for the format to avoid .pdf.pdf
     const signedUrl = cloudinary.utils.private_download_url(
       downloadToken.resource.pdfCloudinaryPublicId,
-      'pdf',
+      '', 
       {
         resource_type: 'raw',
-        attachment: true, // Correct property name
-        expires_at: Math.floor(Date.now() / 1000) + 600 // 10 minutes from now
+        attachment: true,
+        expires_at: Math.floor(Date.now() / 1000) + 600
       }
     );
 
