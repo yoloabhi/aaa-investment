@@ -41,9 +41,13 @@ export async function GET(
 
   // Fetch PDF from Cloudinary and stream it
   try {
+    console.log("Proxying PDF from:", downloadToken.resource.pdfUrl);
     const pdfResponse = await fetch(downloadToken.resource.pdfUrl);
     
-    if (!pdfResponse.ok) throw new Error("Cloudinary file not found");
+    if (!pdfResponse.ok) {
+      console.error(`Cloudinary fetch failed: ${pdfResponse.status} ${pdfResponse.statusText}`);
+      throw new Error("Cloudinary file not found");
+    }
 
     const pdfBuffer = await pdfResponse.arrayBuffer();
 
@@ -53,8 +57,12 @@ export async function GET(
         'Content-Disposition': `inline; filename="${downloadToken.resource.slug}.pdf"`,
       },
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error("PDF proxy error:", err);
-    return NextResponse.json({ error: "Failed to fetch document" }, { status: 500 });
+    return NextResponse.json({ 
+      error: "Failed to fetch document", 
+      details: err.message,
+      url: downloadToken.resource.pdfUrl 
+    }, { status: 500 });
   }
 }
