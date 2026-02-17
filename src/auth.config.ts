@@ -2,6 +2,7 @@ import Google from "next-auth/providers/google"
 import type { NextAuthConfig } from "next-auth"
 
 // This configuration is "Edge-safe" because it doesn't import Prisma
+// Re-triggering build for final verification
 export const authConfig = {
   providers: [
     Google({
